@@ -1,16 +1,12 @@
-class KeyValuePair <Key, Value>{
-    private Key key;
-    private Value value;
-    public KeyValuePair(Key key, Value value) {
-        this.key = key;
-        this.value = value;
-    }
+class KeyValuePair <K, V>{
+    public K Key
+    {get;}
 
-    public Key getKey() {
-        return this.key;
-    }
+    public V Value
+    {get;}
 
-    public Value getValue() {
-        return this.value;
+    public KeyValuePair(K key, V value) {
+        Key = key;
+        Value = value;
     }
 }

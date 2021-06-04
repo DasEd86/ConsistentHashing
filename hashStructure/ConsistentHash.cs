@@ -1,13 +1,16 @@
+using System;
 using System.Text;
 using System.Collections.Generic;
 
 class ConsistentHash {
     private int numberOfNodes;
-
     private int hashMapSize;
+
     private Dictionary<int, Node<int, int>> nodes;
 
     private HashFunction hash;
+
+    private int stepSize;
 
     public ConsistentHash(int numOfNodes, int hashSize) {
         this.numberOfNodes = numOfNodes;
@@ -18,20 +21,21 @@ class ConsistentHash {
     }
 
     private void initializeNodes() {
-        int stepSize = this.hashMapSize / this.numberOfNodes;
+        this.stepSize = this.hashMapSize / this.numberOfNodes;
+
         for (int i = 0; i < numberOfNodes; i++) {
-            int start = i * stepSize;
+            int start = i * this.stepSize;
             this.nodes.Add(start, new Node<int, int>());
         }
     }
 
     public void addDataPoint(KeyValuePair<int, int> keyValuePair) {
-        int hashedKey = this.hash.hashIt(keyValuePair.getKey());
+        int hashedKey = this.hash.hashIt(keyValuePair.Key);
 
         int i = 0;
         foreach (int nodeKey in this.nodes.Keys) {
             if (hashedKey >= nodeKey) {
-                if (hashedKey < (nodeKey + (this.hashMapSize / this.numberOfNodes))
+                if (hashedKey < (nodeKey + this.stepSize)
                     || (i + 1) == this.numberOfNodes) {
                     this.nodes[nodeKey].addDataPoint(keyValuePair);
                     break;
@@ -43,9 +47,17 @@ class ConsistentHash {
 
     public override string ToString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.AppendLine("Hash size: " + this.numberOfNodes);
+        stringBuilder.AppendLine($"Total hash size: {this.numberOfNodes}");
+        stringBuilder.AppendLine($"Hash function: mod({this.hashMapSize})");
+        stringBuilder.AppendLine();
         foreach (int key in this.nodes.Keys) {
-            stringBuilder.AppendLine("Hash Start: " + key + " Size: " + this.nodes[key].getNumberOfStoredKeys());
+            stringBuilder.AppendLine($"Hash keys start: {key}, # of nodes: {this.nodes[key].getNumberOfStoredKeys()}");
+            stringBuilder.Append("Values: ");
+
+            Array.ForEach(this.nodes[key].StoredKeyValuePairs.ToArray(), 
+                element => stringBuilder.Append(element.Key + " "));
+
+            stringBuilder.Append("\n\n");
         }
         return stringBuilder.ToString();
     }
@@ -54,7 +66,7 @@ class ConsistentHash {
         int hashedKey = this.hash.hashIt(key);
 
         foreach (int nodeKey in this.nodes.Keys) {
-            if (hashedKey >= nodeKey && hashedKey <= nodeKey + (this.hashMapSize / this.numberOfNodes)) {
+            if (hashedKey >= nodeKey && hashedKey <= nodeKey + this.stepSize) {
                 return this.nodes[nodeKey].getKeyValuePair(key);
             }
         }

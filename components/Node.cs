@@ -1,23 +1,24 @@
 using System.Collections.Generic;
 
 class Node<Key, Value> {
-    List<KeyValuePair<Key, Value>> storedKeyValuePairs;
+    public List<KeyValuePair<Key, Value>> StoredKeyValuePairs
+    {get;}
 
     public Node() {
-        this.storedKeyValuePairs = new List<KeyValuePair<Key, Value>>();
+        StoredKeyValuePairs = new List<KeyValuePair<Key, Value>>();
     }
 
     public void addDataPoint(KeyValuePair<Key, Value> dataPoint) {
-        this.storedKeyValuePairs.Add(dataPoint);
+        StoredKeyValuePairs.Add(dataPoint);
     }
 
     public int getNumberOfStoredKeys() {
-        return storedKeyValuePairs.Count;
+        return StoredKeyValuePairs.Count;
     }
 
     public KeyValuePair<Key, Value> getKeyValuePair(Key key) {
-        foreach (KeyValuePair<Key, Value> keyValuePair in this.storedKeyValuePairs) {
-            if (keyValuePair.getKey().Equals(key)) {
+        foreach (KeyValuePair<Key, Value> keyValuePair in StoredKeyValuePairs) {
+            if (keyValuePair.Key.Equals(key)) {
                 return keyValuePair;
             }
         }

@@ -1,7 +1,5 @@
-using System;
-
 class HashFunction {
-    int size;
+    private int size;
 
     public HashFunction(int hSize) {
         this.size = hSize;
