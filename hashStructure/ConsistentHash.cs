@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 class ConsistentHash {
     private int numberOfNodes;
-    private int hashMapSize;
+    private int hashFunction;
 
-    private Dictionary<int, Node<int, int>> nodes;
+    private Dictionary<int[], Node<int, int>> nodes;
 
     private HashFunction hash;
 
@@ -14,63 +14,53 @@ class ConsistentHash {
 
     public ConsistentHash(int numOfNodes, int hashSize) {
         this.numberOfNodes = numOfNodes;
-        this.hashMapSize = hashSize;
-        this.nodes = new Dictionary<int, Node<int, int>>();
-        this.hash = new HashFunction(this.hashMapSize);
+        this.hashFunction = hashSize;
+        this.nodes = new Dictionary<int[], Node<int, int>>(numberOfNodes);
+        this.hash = new HashFunction(this.hashFunction);
         this.initializeNodes();
     }
 
     private void initializeNodes() {
-        this.stepSize = this.hashMapSize / this.numberOfNodes;
+        this.stepSize = this.hashFunction / this.numberOfNodes;
 
         for (int i = 0; i < numberOfNodes; i++) {
-            int start = i * this.stepSize;
-            this.nodes.Add(start, new Node<int, int>());
+            int[] nodeKey = {i * this.stepSize, ((i + 1) * this.stepSize) - 1};
+            this.nodes.Add(nodeKey, new Node<int, int>());
         }
     }
 
-    public void addDataPoint(KeyValuePair<int, int> keyValuePair) {
+    public void addValue(KeyValuePair<int, int> keyValuePair) {
         int hashedKey = this.hash.hashIt(keyValuePair.Key);
 
-        int i = 0;
-        foreach (int nodeKey in this.nodes.Keys) {
-            if (hashedKey >= nodeKey) {
-                if (hashedKey < (nodeKey + this.stepSize)
-                    || (i + 1) == this.numberOfNodes) {
-                    this.nodes[nodeKey].addDataPoint(keyValuePair);
-                    break;
-                }
+        foreach (int[] nodeKeyRange in this.nodes.Keys) {
+            if (this.isKeyInRange(hashedKey, nodeKeyRange)) {
+                this.nodes[nodeKeyRange].addKeyValuePair(keyValuePair);
+                break;
             }
-            i++;
         }
+        throw new Exception($"Could not find node to store key: {keyValuePair.Key}");
+    }
+
+    private bool isKeyInRange(int key, int[] range) {
+        return key >= range[0] && key <= range[1];
+
     }
 
     public override string ToString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.AppendLine($"Total hash size: {this.numberOfNodes}");
-        stringBuilder.AppendLine($"Hash function: mod({this.hashMapSize})");
+        stringBuilder.AppendLine($"Nodes: {this.numberOfNodes}");
+        stringBuilder.AppendLine($"Hash function: mod({this.hashFunction})");
         stringBuilder.AppendLine();
-        foreach (int key in this.nodes.Keys) {
-            stringBuilder.AppendLine($"Hash keys start: {key}, # of nodes: {this.nodes[key].getNumberOfStoredKeys()}");
-            stringBuilder.Append("Values: ");
+        foreach (int[] key in this.nodes.Keys) {
+            stringBuilder.AppendLine($"Keys: [{key[0]}, {key[1]}]");
+            stringBuilder.Append("Stored: ");
 
-            Array.ForEach(this.nodes[key].StoredKeyValuePairs.ToArray(), 
-                element => stringBuilder.Append(element.Key + " "));
-
-            stringBuilder.Append("\n\n");
+            Array.ForEach(this.nodes[key].storedKeyValuePairs.ToArray(), 
+                element => stringBuilder.Append($"{element.Key} "));
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine();
         }
         return stringBuilder.ToString();
-    }
-
-    public KeyValuePair<int, int> getDataPoint(int key) {
-        int hashedKey = this.hash.hashIt(key);
-
-        foreach (int nodeKey in this.nodes.Keys) {
-            if (hashedKey >= nodeKey && hashedKey <= nodeKey + this.stepSize) {
-                return this.nodes[nodeKey].getKeyValuePair(key);
-            }
-        }
-        return null;
     }
 
     public void addNode() {
